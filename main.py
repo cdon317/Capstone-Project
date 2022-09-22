@@ -249,28 +249,44 @@ def growth_renew(name):
 
     return model.params[1], model.params[0]
 
-def predict_fossil_gen(year):
+def predict_fossil(year1, year2):
     """Plots a bar chart to predict fossil generation in 2030"""
 
     # Variables to set names of regions and names of color during the plotting function:
     names = list(set(DF_regions['country']))
-    colors = ['lightcoral', 'sandybrown', 'gold', 'olive', 'darkseagreen', 'turquoise', 'slateblue', 'royalblue',
-              'orchid', 'orangered']
 
     # For loop to cycle through regions, run the growth function, and calculate the slope/y-intercept of predictive line
     # this math is then used to plot the estimated bar chart for the year 2030:
-    D = {}
+    D1 = {}
     for name in names:
         m, b = growth_fossil(name)
-        D[name] = round(b + m * int(year))
+        D1[name] = round(b + m * int(year1))
 
-    # Convert dictionary to dataframe, sort by values to plot bars in numerical order:
-    df = pd.DataFrame.from_dict(D, orient= 'index', columns= ['values'])
-    df = df['values'].sort_values(ascending= False)
+    D2 = {}
+    for name in names:
+        m, b = growth_fossil(name)
+        D2[name] = round(b + m * int(year2))
 
-    sns.set(font_scale=1)
-    ax = df.plot(x= 'regions', kind= 'bar', legend= False, color= colors)
-    ax.bar_label(ax.containers[0])
+    test = {
+        "region": [],
+        "current": [],
+        "future": [],
+    }
+
+    for k, v in D1.items():
+        test["region"].append(k)
+        test["current"].append(v)
+
+    for _, v in D2.items():
+        test["future"].append(v)
+
+    df = pd.DataFrame.from_dict(test, orient= 'columns')
+    df = df.sort_values(by=['current', 'future'], ascending= False)
+
+    sns.set(font_scale= 1)
+    ay = df.plot(x= 'region', kind= 'bar', legend= False, color= ['sienna', 'orange'])
+    ay.bar_label(ay.containers[0])
+    ay.bar_label(ay.containers[1])
     plt.title('Predicted Fossil Electricity Generation in 2030')
     plt.xlabel('Region')
     plt.ylabel('Generation in TWh')
@@ -279,30 +295,46 @@ def predict_fossil_gen(year):
 
     plt.show()
 
-    return ax, D
+    return df
 
-def predict_renew_gen(year):
+def predict_renew(year1, year2):
     """Plots a bar chart to predict fossil generation in 2030"""
 
     # Variables to set names of regions and names of color during the plotting function:
     names = list(set(DF_regions['country']))
-    colors = ['lightcoral', 'sandybrown', 'gold', 'olive', 'darkseagreen', 'turquoise', 'slateblue', 'royalblue',
-              'orchid', 'orangered']
 
     # For loop to cycle through regions, run the growth function, and calculate the slope/y-intercept of predictive line
     # this math is then used to plot the estimated bar chart for the year 2030:
-    D = {}
+    D1 = {}
     for name in names:
         m, b = growth_renew(name)
-        D[name] = round(b + m * int(year))
+        D1[name] = round(b + m * int(year1))
 
-    # Convert dictionary to dataframe, sort by values to plot bars in numerical order:
-    df = pd.DataFrame.from_dict(D, orient= 'index', columns= ['values'])
-    df = df['values'].sort_values(ascending= False)
+    D2 = {}
+    for name in names:
+        m, b = growth_renew(name)
+        D2[name] = round(b + m * int(year2))
 
-    sns.set(font_scale=1)
-    ay = df.plot(x= 'regions', kind= 'bar', legend= False, color= colors,)
+    test = {
+        "region": [],
+        "current": [],
+        "future": [],
+    }
+
+    for k, v in D1.items():
+        test["region"].append(k)
+        test["current"].append(v)
+
+    for _, v in D2.items():
+        test["future"].append(v)
+
+    df = pd.DataFrame.from_dict(test, orient= 'columns')
+    df = df.sort_values(by=['current', 'future'], ascending= False)
+
+    sns.set(font_scale= 1)
+    ay = df.plot(x= 'region', kind= 'bar', legend= False, color= ['green', 'palegreen'])
     ay.bar_label(ay.containers[0])
+    ay.bar_label(ay.containers[1])
     plt.title('Predicted Renewable Electricity Generation in 2030')
     plt.xlabel('Region')
     plt.ylabel('Generation in TWh')
@@ -311,7 +343,7 @@ def predict_renew_gen(year):
 
     plt.show()
 
-    return ay, D
+    return df
 
 def res_check(region, fuel):
     """Regression plot to check validity. Accepts a region for statistical usage."""
@@ -359,10 +391,8 @@ def describe_regions():
     df = df[df['year'].isin(range(1985, 2018))]
     test = df.groupby('country').describe()
 
-    slope1, intercept1, r_value1, p_value1, std_err1 = scipy.stats.linregress(df['fossil_electricity'],
-                                                                           df['year'])
-    slope2, intercept2, r_value2, p_value2, std_err2 = scipy.stats.linregress(df['renewables_electricity'],
-                                                                           df['year'])
+    slope1, intercept1, r_value1, p_value1, std_err1 = scipy.stats.linregress(df['fossil_electricity'], df['year'])
+    slope2, intercept2, r_value2, p_value2, std_err2 = scipy.stats.linregress(df['renewables_electricity'], df['year'])
     text1 = 'slope1 = ' + str(slope1), 'intercept1 = ' + str(intercept1) + ' r_value1 = ' + str(r_value1) + ' p_value1'\
             ' = ' + str(p_value1) + ' std_err1 = ' + str(std_err1)
     text2 = 'slope2 = ' + str(slope2), 'intercept2 = ' + str(intercept2) + ' r_value2 = ' + str(r_value2) + ' p_value2'\
@@ -379,7 +409,7 @@ print(plot_fossil_bar(2000, 2019))
 print(plot_renew_bar(2000, 2019))
 print(plot_mult_line_fossil(2000, 2019))
 print(plot_mult_line_renew(2000, 2019))
-print(predict_fossil_gen(2030))
-print(predict_renew_gen(2030))
+print(predict_fossil(2018, 2030))
+print(predict_renew(2018, 2030))
 print(res_check_all_regions())
 print(describe_regions())
